@@ -2,7 +2,6 @@ package db_test
 
 import (
 	"testing"
-	"time"
 
 	"github.com/redpkg/formula/db"
 	"github.com/stretchr/testify/assert"
@@ -56,7 +55,7 @@ func newConfig() db.Config {
 		WriteTimeout:    "60s",
 		DBTimezone:      "UTC",
 		AppTimezone:     "Asia/Taipei",
-		ConnMaxLifeTime: time.Second * 0,
+		ConnMaxLifeTime: "0s",
 		MaxIdleConns:    2,
 		MaxOpenConns:    0,
 	}

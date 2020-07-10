@@ -20,18 +20,18 @@ type ConfigNode struct {
 
 // Config database config
 type Config struct {
-	Driver          string        `mapstructure:"driver"`
-	Database        string        `mapstructure:"database"`
-	Master          ConfigNode    `mapstructure:"master"`
-	Slave           ConfigNode    `mapstructure:"slave"`
-	DialTimeout     string        `mapstructure:"dial_timeout"`
-	ReadTimeout     string        `mapstructure:"read_timeout"`
-	WriteTimeout    string        `mapstructure:"write_timeout"`
-	DBTimezone      string        `mapstructure:"db_timezone"`
-	AppTimezone     string        `mapstructure:"app_timezone"`
-	ConnMaxLifeTime time.Duration `mapstructure:"conn_max_life_time"`
-	MaxIdleConns    int           `mapstructure:"max_idle_conns"`
-	MaxOpenConns    int           `mapstructure:"max_open_conns"`
+	Driver          string     `mapstructure:"driver"`
+	Database        string     `mapstructure:"database"`
+	Master          ConfigNode `mapstructure:"master"`
+	Slave           ConfigNode `mapstructure:"slave"`
+	DialTimeout     string     `mapstructure:"dial_timeout"`
+	ReadTimeout     string     `mapstructure:"read_timeout"`
+	WriteTimeout    string     `mapstructure:"write_timeout"`
+	DBTimezone      string     `mapstructure:"db_timezone"`
+	AppTimezone     string     `mapstructure:"app_timezone"`
+	ConnMaxLifeTime string     `mapstructure:"conn_max_life_time"`
+	MaxIdleConns    int        `mapstructure:"max_idle_conns"`
+	MaxOpenConns    int        `mapstructure:"max_open_conns"`
 }
 
 func (c Config) dbTimezone() (*time.Location, error) {
@@ -40,6 +40,10 @@ func (c Config) dbTimezone() (*time.Location, error) {
 
 func (c Config) appTimezone() (*time.Location, error) {
 	return time.LoadLocation(c.AppTimezone)
+}
+
+func (c Config) connMaxLifeTime() (time.Duration, error) {
+	return time.ParseDuration(c.ConnMaxLifeTime)
 }
 
 // New create db instance
@@ -74,6 +78,10 @@ func newNode(conf Config, nodeConf ConfigNode) (*xorm.Engine, error) {
 	if err != nil {
 		return nil, err
 	}
+	connMaxLifeTime, err := conf.connMaxLifeTime()
+	if err != nil {
+		return nil, err
+	}
 
 	db, err := xorm.NewEngine(conf.Driver, buildDSN(nodeConf.Username, nodeConf.Password, nodeConf.Address, conf.Database, conf.DialTimeout, conf.ReadTimeout, conf.WriteTimeout, conf.DBTimezone))
 	if err != nil {
@@ -82,7 +90,7 @@ func newNode(conf Config, nodeConf ConfigNode) (*xorm.Engine, error) {
 
 	db.SetTZDatabase(dbTimezone)
 	db.SetTZLocation(appTimezone)
-	db.SetConnMaxLifetime(conf.ConnMaxLifeTime)
+	db.SetConnMaxLifetime(connMaxLifeTime)
 	db.SetMaxIdleConns(conf.MaxIdleConns)
 	db.SetMaxOpenConns(conf.MaxOpenConns)
 

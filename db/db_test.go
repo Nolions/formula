@@ -1,19 +1,13 @@
 package db_test
 
 import (
+	"fmt"
 	"testing"
+	"time"
 
-	"github.com/redpkg/formula/db"
+	"github.com/redpkg/formula/v2/db"
 	"github.com/stretchr/testify/assert"
 )
-
-func TestNewNoMaster(t *testing.T) {
-	assert := assert.New(t)
-
-	_, err := db.New(newConfig())
-
-	assert.EqualError(err, "master cannot be nil, master db is required")
-}
 
 func TestNewOnlyMaster(t *testing.T) {
 	assert := assert.New(t)
@@ -28,6 +22,8 @@ func TestNewOnlyMaster(t *testing.T) {
 
 	assert.Len(db.Slaves(), 0)
 	assert.Equal(db.Master(), db.Slave())
+
+	fmt.Printf("%+v\n", db.Master())
 }
 
 func TestNewMasterSlave(t *testing.T) {
@@ -44,27 +40,29 @@ func TestNewMasterSlave(t *testing.T) {
 
 	assert.Len(db.Slaves(), 1)
 	assert.NotEqual(db.Master(), db.Slave())
+
+	fmt.Printf("%+v\n", db.Master())
+	fmt.Printf("%+v\n", db.Slave())
 }
 
 func newConfig() db.Config {
 	return db.Config{
-		Driver:          "mysql",
-		Database:        "test",
+		Database:        "default",
+		Timezone:        "UTC",
 		DialTimeout:     "10s",
 		ReadTimeout:     "30s",
 		WriteTimeout:    "60s",
-		DBTimezone:      "UTC",
-		AppTimezone:     "Asia/Taipei",
-		ConnMaxLifeTime: "0s",
-		MaxIdleConns:    2,
-		MaxOpenConns:    0,
+		ConnMaxLifetime: time.Hour,
+		MaxIdleConns:    5,
+		MaxOpenConns:    10,
 	}
 }
 
 func newConfigNode(role string) db.ConfigNode {
 	return db.ConfigNode{
+		Host:     "localhost",
+		Port:     3306,
 		Username: role,
 		Password: role,
-		Address:  "localhost:3306",
 	}
 }
